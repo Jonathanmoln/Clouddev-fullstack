@@ -1,0 +1,288 @@
+{
+ "Resources": {
+  "SecurityGroupDD263621": {
+   "Type": "AWS::EC2::SecurityGroup",
+   "Properties": {
+    "GroupDescription": "jonathan-rasse-backend-ec2-assignment/SecurityGroup",
+    "SecurityGroupEgress": [
+     {
+      "CidrIp": "0.0.0.0/0",
+      "Description": "Allow all outbound traffic by default",
+      "IpProtocol": "-1"
+     }
+    ],
+    "SecurityGroupIngress": [
+     {
+      "CidrIp": "0.0.0.0/0",
+      "Description": "Allow HTTP traffic",
+      "FromPort": 80,
+      "IpProtocol": "tcp",
+      "ToPort": 80
+     },
+     {
+      "CidrIp": "0.0.0.0/0",
+      "Description": "Allow HTTPS traffic",
+      "FromPort": 443,
+      "IpProtocol": "tcp",
+      "ToPort": 443
+     }
+    ],
+    "VpcId": "vpc-5e8e3b37"
+   },
+   "Metadata": {
+    "aws:cdk:path": "jonathan-rasse-backend-ec2-assignment/SecurityGroup/Resource"
+   }
+  },
+  "EC2RoleF978FC1C": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "ec2.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/AmazonSSMManagedInstanceCore"
+       ]
+      ]
+     },
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "jonathan-rasse-backend-ec2-assignment/EC2Role/Resource"
+   }
+  },
+  "MyEC2InstanceInstanceProfile9377ECBE": {
+   "Type": "AWS::IAM::InstanceProfile",
+   "Properties": {
+    "Roles": [
+     {
+      "Ref": "EC2RoleF978FC1C"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "jonathan-rasse-backend-ec2-assignment/MyEC2Instance/InstanceProfile"
+   }
+  },
+  "MyEC2InstanceB097982C": {
+   "Type": "AWS::EC2::Instance",
+   "Properties": {
+    "AvailabilityZone": "eu-north-1a",
+    "IamInstanceProfile": {
+     "Ref": "MyEC2InstanceInstanceProfile9377ECBE"
+    },
+    "ImageId": {
+     "Ref": "SsmParameterValueawsserviceamiamazonlinuxlatestamzn2amikernel510hvmx8664gp2C96584B6F00A464EAD1953AFF4B05118Parameter"
+    },
+    "InstanceType": "t3.micro",
+    "SecurityGroupIds": [
+     {
+      "Fn::GetAtt": [
+       "SecurityGroupDD263621",
+       "GroupId"
+      ]
+     }
+    ],
+    "SubnetId": "subnet-73cb611a",
+    "Tags": [
+     {
+      "Key": "Name",
+      "Value": "jonathan-rasse-backend-ec2-assignment/MyEC2Instance"
+     }
+    ],
+    "UserData": {
+     "Fn::Base64": "#!/bin/bash\nyum install docker -y\nsudo systemctl start docker\naws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin 292370674225.dkr.ecr.eu-north-1.amazonaws.com\ndocker run -d --name my-application -p 80:8080 292370674225.dkr.ecr.eu-north-1.amazonaws.com/webshop-api:latest"
+    }
+   },
+   "DependsOn": [
+    "EC2RoleF978FC1C"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "jonathan-rasse-backend-ec2-assignment/MyEC2Instance/Resource"
+   }
+  },
+  "ALBAEE750D2": {
+   "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
+   "Properties": {
+    "LoadBalancerAttributes": [
+     {
+      "Key": "deletion_protection.enabled",
+      "Value": "false"
+     }
+    ],
+    "Scheme": "internet-facing",
+    "SecurityGroups": [
+     {
+      "Fn::GetAtt": [
+       "SecurityGroupDD263621",
+       "GroupId"
+      ]
+     }
+    ],
+    "Subnets": [
+     "subnet-73cb611a",
+     "subnet-f3cf1a88",
+     "subnet-1341b55e"
+    ],
+    "Type": "application"
+   },
+   "Metadata": {
+    "aws:cdk:path": "jonathan-rasse-backend-ec2-assignment/ALB/Resource"
+   }
+  },
+  "ALBListener3B99FF85": {
+   "Type": "AWS::ElasticLoadBalancingV2::Listener",
+   "Properties": {
+    "DefaultActions": [
+     {
+      "TargetGroupArn": {
+       "Ref": "ALBListenerTargetGroupGroupF75CFA33"
+      },
+      "Type": "forward"
+     }
+    ],
+    "LoadBalancerArn": {
+     "Ref": "ALBAEE750D2"
+    },
+    "Port": 80,
+    "Protocol": "HTTP"
+   },
+   "Metadata": {
+    "aws:cdk:path": "jonathan-rasse-backend-ec2-assignment/ALB/Listener/Resource"
+   }
+  },
+  "ALBListenerTargetGroupGroupF75CFA33": {
+   "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+   "Properties": {
+    "Port": 80,
+    "Protocol": "HTTP",
+    "TargetGroupAttributes": [
+     {
+      "Key": "stickiness.enabled",
+      "Value": "false"
+     }
+    ],
+    "TargetType": "instance",
+    "Targets": [
+     {
+      "Id": {
+       "Ref": "MyEC2InstanceB097982C"
+      }
+     }
+    ],
+    "VpcId": "vpc-5e8e3b37"
+   },
+   "Metadata": {
+    "aws:cdk:path": "jonathan-rasse-backend-ec2-assignment/ALB/Listener/TargetGroupGroup/Resource"
+   }
+  },
+  "MyRecordSet707B295C": {
+   "Type": "AWS::Route53::RecordSet",
+   "Properties": {
+    "AliasTarget": {
+     "DNSName": {
+      "Fn::Join": [
+       "",
+       [
+        "dualstack.",
+        {
+         "Fn::GetAtt": [
+          "ALBAEE750D2",
+          "DNSName"
+         ]
+        }
+       ]
+      ]
+     },
+     "HostedZoneId": {
+      "Fn::GetAtt": [
+       "ALBAEE750D2",
+       "CanonicalHostedZoneID"
+      ]
+     }
+    },
+    "HostedZoneId": "Z0413857YT73A0A8FRFF",
+    "Name": "jonathan-rasse-backend-api.cloud-ha.com.",
+    "Type": "A"
+   },
+   "Metadata": {
+    "aws:cdk:path": "jonathan-rasse-backend-ec2-assignment/MyRecordSet/Resource"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/1WQTU/DMAyGf8vuaWCdOHAEDgjEYeq4Iy/1Jm9pUjnupqnKf8frCOou8fv68UeS2i5Xz/ZxAedUufZYedracSPgjqbBFAd2aJT9jOhqBegGJrm8cxx687YL94mPkASCdigpOhuCzo5N9FO6xILXHHfktQo9JCHnI7Rb8Ioo7E+68qXvPTkQiuFL2evEkK8z7vy8jpJg+Kspesa/gfco/2+Y2Wz0FHxa6d4GXeR2uvOkNig5X+0aGDqU2/zySdl8wgke6uXikIgqHoJQh7a5xV/pKvu8ZgEAAA=="
+   },
+   "Metadata": {
+    "aws:cdk:path": "jonathan-rasse-backend-ec2-assignment/CDKMetadata/Default"
+   }
+  }
+ },
+ "Parameters": {
+  "SsmParameterValueawsserviceamiamazonlinuxlatestamzn2amikernel510hvmx8664gp2C96584B6F00A464EAD1953AFF4B05118Parameter": {
+   "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
+   "Default": "/aws/service/ami-amazon-linux-latest/amzn2-ami-kernel-5.10-hvm-x86_64-gp2"
+  },
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,137 @@
+{
+  "version": "36.0.0",
+  "artifacts": {
+    "jonathan-rasse-ec2-assignment.assets": {
+      "type": "cdk:asset-manifest",
+      "properties": {
+        "file": "jonathan-rasse-ec2-assignment.assets.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+      }
+    },
+    "jonathan-rasse-ec2-assignment": {
+      "type": "aws:cloudformation:stack",
+      "environment": "aws://292370674225/eu-north-1",
+      "properties": {
+        "templateFile": "jonathan-rasse-ec2-assignment.template.json",
+        "terminationProtection": false,
+        "validateOnSynth": false,
+        "assumeRoleArn": "arn:${AWS::Partition}:iam::292370674225:role/cdk-hnb659fds-deploy-role-292370674225-eu-north-1",
+        "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::292370674225:role/cdk-hnb659fds-cfn-exec-role-292370674225-eu-north-1",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-292370674225-eu-north-1/5a984d2dca7338cad6a390c73f6ebc8f5513c8ba5abb6fe0549a6c7787cc6055.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
+        "additionalDependencies": [
+          "jonathan-rasse-ec2-assignment.assets"
+        ],
+        "lookupRole": {
+          "arn": "arn:${AWS::Partition}:iam::292370674225:role/cdk-hnb659fds-lookup-role-292370674225-eu-north-1",
+          "requiresBootstrapStackVersion": 8,
+          "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+        }
+      },
+      "dependencies": [
+        "jonathan-rasse-ec2-assignment.assets"
+      ],
+      "metadata": {
+        "/jonathan-rasse-ec2-assignment/SecurityGroup/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "SecurityGroupDD263621"
+          }
+        ],
+        "/jonathan-rasse-ec2-assignment/EC2Role/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "EC2RoleF978FC1C"
+          }
+        ],
+        "/jonathan-rasse-ec2-assignment/PostgresDB/SubnetGroup/Default": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PostgresDBSubnetGroup5D444ECC"
+          }
+        ],
+        "/jonathan-rasse-ec2-assignment/PostgresDB/SecurityGroup/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PostgresDBSecurityGroupEF920298"
+          }
+        ],
+        "/jonathan-rasse-ec2-assignment/PostgresDB/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PostgresDB113281D2"
+          }
+        ],
+        "/jonathan-rasse-ec2-assignment/MyEC2Instance/InstanceProfile": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MyEC2InstanceInstanceProfile9377ECBE"
+          }
+        ],
+        "/jonathan-rasse-ec2-assignment/MyEC2Instance/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MyEC2InstanceB097982C99019c27665b08a5"
+          }
+        ],
+        "/jonathan-rasse-ec2-assignment/SsmParameterValue:--aws--service--ami-amazon-linux-latest--amzn2-ami-kernel-5.10-hvm-x86_64-gp2:C96584B6-F00A-464E-AD19-53AFF4B05118.Parameter": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "SsmParameterValueawsserviceamiamazonlinuxlatestamzn2amikernel510hvmx8664gp2C96584B6F00A464EAD1953AFF4B05118Parameter"
+          }
+        ],
+        "/jonathan-rasse-ec2-assignment/ALB/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ALBAEE750D2"
+          }
+        ],
+        "/jonathan-rasse-ec2-assignment/ALB/Listener/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ALBListener3B99FF85"
+          }
+        ],
+        "/jonathan-rasse-ec2-assignment/ALB/Listener/TargetGroupGroup/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ALBListenerTargetGroupGroupF75CFA33"
+          }
+        ],
+        "/jonathan-rasse-ec2-assignment/MyRecordSet/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "MyRecordSet707B295C"
+          }
+        ],
+        "/jonathan-rasse-ec2-assignment/CDKMetadata/Default": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CDKMetadata"
+          }
+        ],
+        "/jonathan-rasse-ec2-assignment/BootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BootstrapVersion"
+          }
+        ],
+        "/jonathan-rasse-ec2-assignment/CheckBootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CheckBootstrapVersion"
+          }
+        ]
+      },
+      "displayName": "jonathan-rasse-ec2-assignment"
+    },
+    "Tree": {
+      "type": "cdk:tree",
+      "properties": {
+        "file": "tree.json"
+      }
+    }
+  }
+}

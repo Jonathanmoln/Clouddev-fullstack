@@ -1,0 +1,349 @@
+{
+ "Resources": {
+  "SecurityGroupDD263621": {
+   "Type": "AWS::EC2::SecurityGroup",
+   "Properties": {
+    "GroupDescription": "jonathan-rasse-ec2-assignment/SecurityGroup",
+    "SecurityGroupEgress": [
+     {
+      "CidrIp": "0.0.0.0/0",
+      "Description": "Allow all outbound traffic by default",
+      "IpProtocol": "-1"
+     }
+    ],
+    "SecurityGroupIngress": [
+     {
+      "CidrIp": "0.0.0.0/0",
+      "Description": "Allow HTTP traffic",
+      "FromPort": 80,
+      "IpProtocol": "tcp",
+      "ToPort": 80
+     },
+     {
+      "CidrIp": "0.0.0.0/0",
+      "Description": "Allow HTTPS traffic",
+      "FromPort": 443,
+      "IpProtocol": "tcp",
+      "ToPort": 443
+     }
+    ],
+    "VpcId": "vpc-5e8e3b37"
+   },
+   "Metadata": {
+    "aws:cdk:path": "jonathan-rasse-ec2-assignment/SecurityGroup/Resource"
+   }
+  },
+  "EC2RoleF978FC1C": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "ec2.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/AmazonSSMManagedInstanceCore"
+       ]
+      ]
+     },
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "jonathan-rasse-ec2-assignment/EC2Role/Resource"
+   }
+  },
+  "PostgresDBSubnetGroup5D444ECC": {
+   "Type": "AWS::RDS::DBSubnetGroup",
+   "Properties": {
+    "DBSubnetGroupDescription": "Subnet group for PostgresDB database",
+    "SubnetIds": [
+     "subnet-73cb611a",
+     "subnet-f3cf1a88",
+     "subnet-1341b55e"
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "jonathan-rasse-ec2-assignment/PostgresDB/SubnetGroup/Default"
+   }
+  },
+  "PostgresDBSecurityGroupEF920298": {
+   "Type": "AWS::EC2::SecurityGroup",
+   "Properties": {
+    "GroupDescription": "Security group for PostgresDB database",
+    "SecurityGroupEgress": [
+     {
+      "CidrIp": "0.0.0.0/0",
+      "Description": "Allow all outbound traffic by default",
+      "IpProtocol": "-1"
+     }
+    ],
+    "VpcId": "vpc-5e8e3b37"
+   },
+   "Metadata": {
+    "aws:cdk:path": "jonathan-rasse-ec2-assignment/PostgresDB/SecurityGroup/Resource"
+   }
+  },
+  "PostgresDB113281D2": {
+   "Type": "AWS::RDS::DBInstance",
+   "Properties": {
+    "AllocatedStorage": "100",
+    "CopyTagsToSnapshot": true,
+    "DBInstanceClass": "db.t3.micro",
+    "DBSubnetGroupName": {
+     "Ref": "PostgresDBSubnetGroup5D444ECC"
+    },
+    "Engine": "postgres",
+    "EngineVersion": "15.6",
+    "MasterUserPassword": "mastermaster",
+    "MasterUsername": "master",
+    "PubliclyAccessible": true,
+    "StorageType": "gp2",
+    "VPCSecurityGroups": [
+     {
+      "Fn::GetAtt": [
+       "PostgresDBSecurityGroupEF920298",
+       "GroupId"
+      ]
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Snapshot",
+   "DeletionPolicy": "Snapshot",
+   "Metadata": {
+    "aws:cdk:path": "jonathan-rasse-ec2-assignment/PostgresDB/Resource"
+   }
+  },
+  "MyEC2InstanceInstanceProfile9377ECBE": {
+   "Type": "AWS::IAM::InstanceProfile",
+   "Properties": {
+    "Roles": [
+     {
+      "Ref": "EC2RoleF978FC1C"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "jonathan-rasse-ec2-assignment/MyEC2Instance/InstanceProfile"
+   }
+  },
+  "MyEC2InstanceB097982C99019c27665b08a5": {
+   "Type": "AWS::EC2::Instance",
+   "Properties": {
+    "AvailabilityZone": "eu-north-1a",
+    "IamInstanceProfile": {
+     "Ref": "MyEC2InstanceInstanceProfile9377ECBE"
+    },
+    "ImageId": {
+     "Ref": "SsmParameterValueawsserviceamiamazonlinuxlatestamzn2amikernel510hvmx8664gp2C96584B6F00A464EAD1953AFF4B05118Parameter"
+    },
+    "InstanceType": "t3.micro",
+    "SecurityGroupIds": [
+     {
+      "Fn::GetAtt": [
+       "SecurityGroupDD263621",
+       "GroupId"
+      ]
+     }
+    ],
+    "SubnetId": "subnet-73cb611a",
+    "Tags": [
+     {
+      "Key": "Name",
+      "Value": "jonathan-rasse-ec2-assignment/MyEC2Instance"
+     }
+    ],
+    "UserData": {
+     "Fn::Base64": "#!/bin/bash\nyum install docker -y\nsudo systemctl start docker\naws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin 292370674225.dkr.ecr.eu-north-1.amazonaws.com\ndocker run -d -e DB_URL=\"jonathan-rasse-ec2-assignment-postgresdb113281d2-9qfqlgsgsyme.chbvabsbak05.eu-north-1.rds.amazonaws.com\" -e DB_USERNAME=\"master\" -e DB_PASSWORD=\"mastermaster\" -e SPRING_PROFILES_ACTIVE=\"postgres\" --name my-application -p 80:8080 292370674225.dkr.ecr.eu-north-1.amazonaws.com/webshop-api:latest"
+    }
+   },
+   "DependsOn": [
+    "EC2RoleF978FC1C"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "jonathan-rasse-ec2-assignment/MyEC2Instance/Resource"
+   }
+  },
+  "ALBAEE750D2": {
+   "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
+   "Properties": {
+    "LoadBalancerAttributes": [
+     {
+      "Key": "deletion_protection.enabled",
+      "Value": "false"
+     }
+    ],
+    "Scheme": "internet-facing",
+    "SecurityGroups": [
+     {
+      "Fn::GetAtt": [
+       "SecurityGroupDD263621",
+       "GroupId"
+      ]
+     }
+    ],
+    "Subnets": [
+     "subnet-73cb611a",
+     "subnet-f3cf1a88",
+     "subnet-1341b55e"
+    ],
+    "Type": "application"
+   },
+   "Metadata": {
+    "aws:cdk:path": "jonathan-rasse-ec2-assignment/ALB/Resource"
+   }
+  },
+  "ALBListener3B99FF85": {
+   "Type": "AWS::ElasticLoadBalancingV2::Listener",
+   "Properties": {
+    "DefaultActions": [
+     {
+      "TargetGroupArn": {
+       "Ref": "ALBListenerTargetGroupGroupF75CFA33"
+      },
+      "Type": "forward"
+     }
+    ],
+    "LoadBalancerArn": {
+     "Ref": "ALBAEE750D2"
+    },
+    "Port": 80,
+    "Protocol": "HTTP"
+   },
+   "Metadata": {
+    "aws:cdk:path": "jonathan-rasse-ec2-assignment/ALB/Listener/Resource"
+   }
+  },
+  "ALBListenerTargetGroupGroupF75CFA33": {
+   "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+   "Properties": {
+    "Port": 80,
+    "Protocol": "HTTP",
+    "TargetGroupAttributes": [
+     {
+      "Key": "stickiness.enabled",
+      "Value": "false"
+     }
+    ],
+    "TargetType": "instance",
+    "Targets": [
+     {
+      "Id": {
+       "Ref": "MyEC2InstanceB097982C99019c27665b08a5"
+      }
+     }
+    ],
+    "VpcId": "vpc-5e8e3b37"
+   },
+   "Metadata": {
+    "aws:cdk:path": "jonathan-rasse-ec2-assignment/ALB/Listener/TargetGroupGroup/Resource"
+   }
+  },
+  "MyRecordSet707B295C": {
+   "Type": "AWS::Route53::RecordSet",
+   "Properties": {
+    "AliasTarget": {
+     "DNSName": {
+      "Fn::Join": [
+       "",
+       [
+        "dualstack.",
+        {
+         "Fn::GetAtt": [
+          "ALBAEE750D2",
+          "DNSName"
+         ]
+        }
+       ]
+      ]
+     },
+     "HostedZoneId": {
+      "Fn::GetAtt": [
+       "ALBAEE750D2",
+       "CanonicalHostedZoneID"
+      ]
+     }
+    },
+    "HostedZoneId": "Z0413857YT73A0A8FRFF",
+    "Name": "jonathan-rasse-api.cloud-ha.com.",
+    "Type": "A"
+   },
+   "Metadata": {
+    "aws:cdk:path": "jonathan-rasse-ec2-assignment/MyRecordSet/Resource"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/2WQTU/DMAyGf8vuaWCdOHBkTEIgDlPLHbmpN3lLk8pxhlDV/07WkdGJk+338Xepl6tHfb+Ar1CY9lhYavRQC5ijqjD4yAZVYp8DmjIBNJFJvl/Yx14979yt8OqCgEsViWR/VASdHipvJznbjLfsd2RTFrdBDxsQaCDgtVEdG4dyHbdZ/xP+5qCFIGSsh7YBmzRy+1Na+qnvLRkQ8u49sfXEkM/lN/E8j4Kg+83J/ox/AO9nW8zCdIiPgg+rNLdC47mdrp68GmUcz+EWGDqUS//85lG9wQnuyuXiEIgKjk6oQ11d7A82utyjqAEAAA=="
+   },
+   "Metadata": {
+    "aws:cdk:path": "jonathan-rasse-ec2-assignment/CDKMetadata/Default"
+   }
+  }
+ },
+ "Parameters": {
+  "SsmParameterValueawsserviceamiamazonlinuxlatestamzn2amikernel510hvmx8664gp2C96584B6F00A464EAD1953AFF4B05118Parameter": {
+   "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
+   "Default": "/aws/service/ami-amazon-linux-latest/amzn2-ami-kernel-5.10-hvm-x86_64-gp2"
+  },
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}

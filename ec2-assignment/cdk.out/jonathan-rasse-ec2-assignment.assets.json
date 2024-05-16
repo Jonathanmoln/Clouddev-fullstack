@@ -1,0 +1,20 @@
+{
+  "version": "36.0.0",
+  "files": {
+    "5a984d2dca7338cad6a390c73f6ebc8f5513c8ba5abb6fe0549a6c7787cc6055": {
+      "source": {
+        "path": "jonathan-rasse-ec2-assignment.template.json",
+        "packaging": "file"
+      },
+      "destinations": {
+        "292370674225-eu-north-1": {
+          "bucketName": "cdk-hnb659fds-assets-292370674225-eu-north-1",
+          "objectKey": "5a984d2dca7338cad6a390c73f6ebc8f5513c8ba5abb6fe0549a6c7787cc6055.json",
+          "region": "eu-north-1",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::292370674225:role/cdk-hnb659fds-file-publishing-role-292370674225-eu-north-1"
+        }
+      }
+    }
+  },
+  "dockerImages": {}
+}
