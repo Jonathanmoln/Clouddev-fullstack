@@ -73,7 +73,7 @@ public class EC2DockerApplicationStack extends Stack {
                         .subnetType(SubnetType.PUBLIC)
                         .build())
                 .build();
-
+database.getConnections().allowFrom(mySecurityGroup,Port.tcp(5432));
 
         // Create the EC2 Instance
         Instance ec2Instance = Instance.Builder.create(this, "MyEC2Instance")
